@@ -1,15 +1,23 @@
 package routes
 
 import (
-	services "github.com/wsb777/call-back/internal/services/user"
+	"log"
 	"net/http"
 
 	"github.com/wsb777/call-back/http/controllers/user"
+	"github.com/wsb777/call-back/http/middleware"
+	services "github.com/wsb777/call-back/internal/services/user"
+	_jwt "github.com/wsb777/call-back/pkg/jwt"
 )
 
-func UserRoutes(router *http.ServeMux, userSignUpService services.UserSignUpService, userSignInService services.UserSignInService) {
-	signInController := user.NewUserSignInController(userSignInService)
+func UserRoutes(router *http.ServeMux, userSignUpService services.UserSignUpService, jwtEncoder _jwt.Encoder) {
+	log.Printf("UserRoutes: jwtEncoder=%p", jwtEncoder)
 	signUpController := user.NewUserSignUpController(userSignUpService)
-	router.HandleFunc("/api/v1/users/register", signUpController.Register)
-	router.HandleFunc("/api/v1/users/login", signInController.SignIn)
+
+	protectedHandler := middleware.AuthMiddleware(
+		http.HandlerFunc(signUpController.Register),
+		jwtEncoder,
+	)
+
+	router.Handle("/api/v1/users/register", protectedHandler)
 }

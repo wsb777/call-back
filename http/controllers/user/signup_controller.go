@@ -29,7 +29,6 @@ func (c *UserSignUpController) Register(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
-	
 
 	err := c.userService.CreateUser(req)
 	if err != nil {

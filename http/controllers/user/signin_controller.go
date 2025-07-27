@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -27,12 +28,14 @@ func (c *UserSignInController) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := c.service.SignIn(req)
+	token, err := c.service.SignIn(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(id))
+	log.Printf("Generated token: %s", token)
+	fmt.Fprintf(w, `{"token": "%s"}`, token)
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/wsb777/call-back/internal/db/repo"
 	"github.com/wsb777/call-back/internal/services/user"
 	"github.com/wsb777/call-back/pkg/hasher"
+	"github.com/wsb777/call-back/pkg/jwt"
 	"net/http"
 )
 
@@ -31,7 +32,8 @@ func InitHttpServer() (http.Handler, error) {
 	userRepo := repo.NewUserRepo(sqlDB)
 	bCryptHasher := hasher.NewBCryptHasher()
 	userSignUpService := services.NewUserSignUpService(userRepo, bCryptHasher)
-	userSignInService := services.NewUserSignInService(userRepo, bCryptHasher)
-	handler := routes.NewHTTPServer(userSignUpService, userSignInService)
+	jwtEncoder := jwt.NewJWTEncoder(configConfig)
+	userSignInService := services.NewUserSignInService(userRepo, bCryptHasher, jwtEncoder)
+	handler := routes.NewHTTPServer(userSignUpService, userSignInService, jwtEncoder)
 	return handler, nil
 }

@@ -4,8 +4,9 @@
 package app
 
 import (
-	services "github.com/wsb777/call-back/internal/services/user"
 	"net/http"
+
+	services "github.com/wsb777/call-back/internal/services/user"
 
 	"github.com/google/wire"
 	"github.com/wsb777/call-back/http/routes"
@@ -13,6 +14,7 @@ import (
 	"github.com/wsb777/call-back/internal/db"
 	"github.com/wsb777/call-back/internal/db/repo"
 	"github.com/wsb777/call-back/pkg/hasher"
+	_jwt "github.com/wsb777/call-back/pkg/jwt"
 )
 
 func InitHttpServer() (http.Handler, error) {
@@ -27,6 +29,8 @@ func InitHttpServer() (http.Handler, error) {
 		// Утилиты
 		wire.Bind(new(hasher.PasswordHasher), new(*hasher.BCryptHasher)),
 		hasher.NewBCryptHasher,
+		wire.Bind(new(_jwt.Encoder), new(*_jwt.JWTEncoder)),
+		_jwt.NewJWTEncoder,
 		// Сервисы
 		services.NewUserSignUpService,
 		services.NewUserSignInService,

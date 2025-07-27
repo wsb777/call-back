@@ -1,13 +1,15 @@
 package routes
 
 import (
-	services "github.com/wsb777/call-back/internal/services/user"
 	"fmt"
 	"net/http"
-	"github.com/wsb777/call-back/pkg/middleware"
+
+	"github.com/wsb777/call-back/http/middleware"
+	services "github.com/wsb777/call-back/internal/services/user"
+	"github.com/wsb777/call-back/pkg/jwt"
 )
 
-func NewHTTPServer(userSignUpService services.UserSignUpService, userSignInService services.UserSignInService) http.Handler {
+func NewHTTPServer(userSignUpService services.UserSignUpService, userSignInService services.UserSignInService, jwtEncoder jwt.Encoder) http.Handler {
 	mux := http.NewServeMux()
 
 	// Корневой обработчик
@@ -19,7 +21,8 @@ func NewHTTPServer(userSignUpService services.UserSignUpService, userSignInServi
 		fmt.Fprintf(w, "Database version: %s", "Ураура")
 	}))
 	// Регистрация пользовательских маршрутов
-	UserRoutes(mux, userSignUpService, userSignInService)
+	UserRoutes(mux, userSignUpService, jwtEncoder)
+	AuthRoutes(mux, userSignInService)
 	middleServer := middleware.AllInfoMiddleware(mux)
 	return middleServer
 }
