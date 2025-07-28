@@ -6,16 +6,25 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/wsb777/call-back/internal/config"
 )
 
 type Encoder interface {
-	CreateToken(userId string) (string, error)
-	VerifyToken(tokenString string) (*Claims, error)
+	CreateAccessToken(userId string) (string, error)
+	VerifyToken(tokenString string) (*AccessClaims, error)
+	VerifyRefreshToken(tokenString string) (*RefreshClaims, error)
+	GenerateTokenPair(userId string) (accessToken, refreshToken string, err error)
 }
 
-type Claims struct {
-	UserID string `json:"userId"`
+type AccessClaims struct {
+	UserID string `json:"user_id"`
+	jwt.RegisteredClaims
+}
+
+type RefreshClaims struct {
+	UserID  string `json:"user_id"`
+	TokenID string `json:"token_id"`
 	jwt.RegisteredClaims
 }
 
@@ -24,17 +33,15 @@ type JWTEncoder struct {
 }
 
 func NewJWTEncoder(cfg *config.Config) *JWTEncoder {
-	log.Printf("NewJWTEncoder CALLED with secret: %s", cfg.JWTSecret)
 	return &JWTEncoder{secret: cfg.JWTSecret}
 }
 
-func (j *JWTEncoder) CreateToken(userId string) (string, error) {
+func (j *JWTEncoder) CreateAccessToken(userId string) (string, error) {
 	key := []byte(j.secret)
-	log.Printf("CreateToken: j=%p, secret='%s'", j, j.secret)
-	claims := Claims{
+	claims := AccessClaims{
 		userId,
 		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // Срок действия
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)), // Срок действия
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "call-back",
 		},
@@ -45,14 +52,42 @@ func (j *JWTEncoder) CreateToken(userId string) (string, error) {
 	return token.SignedString(key)
 }
 
-func (j *JWTEncoder) VerifyToken(tokenString string) (*Claims, error) {
+func (j *JWTEncoder) CreateRefreshToken(userId string) (string, error) {
 	key := []byte(j.secret)
-	log.Printf("VerifyToken: using secret: %s", j.secret)
+	tokenID := uuid.New().String()
+	claims := RefreshClaims{
+		userId,
+		tokenID,
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)), // Срок действия
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    "call-back",
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	return token.SignedString(key)
+}
+
+func (j *JWTEncoder) GenerateTokenPair(userId string) (accessToken, refreshToken string, err error) {
+	accessToken, err = j.CreateAccessToken(userId)
+	if err != nil {
+		return "", "", err
+	}
+	refreshToken, err = j.CreateRefreshToken(userId)
+	if err != nil {
+		return "", "", err
+	}
+	return accessToken, refreshToken, nil
+}
+
+func (j *JWTEncoder) VerifyToken(tokenString string) (*AccessClaims, error) {
+	key := []byte(j.secret)
 	log.Println(tokenString)
-	log.Println("Проверка токена...")
 	token, err := jwt.ParseWithClaims(
 		tokenString,
-		&Claims{},
+		&AccessClaims{},
 		func(token *jwt.Token) (interface{}, error) {
 
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -62,7 +97,29 @@ func (j *JWTEncoder) VerifyToken(tokenString string) (*Claims, error) {
 		},
 	)
 
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+	if claims, ok := token.Claims.(*AccessClaims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, err
+}
+
+func (j *JWTEncoder) VerifyRefreshToken(tokenString string) (*RefreshClaims, error) {
+	key := []byte(j.secret)
+	log.Println(tokenString)
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		&RefreshClaims{},
+		func(token *jwt.Token) (interface{}, error) {
+
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return key, nil
+		},
+	)
+
+	if claims, ok := token.Claims.(*RefreshClaims); ok && token.Valid {
 		return claims, nil
 	}
 
@@ -73,7 +130,7 @@ func TestJWTVerification() {
 	encoder := &JWTEncoder{secret: "your_secret_key"}
 
 	// Создание тестового токена
-	token, _ := encoder.CreateToken("test_user")
+	token, _ := encoder.CreateAccessToken("test_user")
 	log.Printf("Generated token: %s", token)
 
 	// Проверка токена

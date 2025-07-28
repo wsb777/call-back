@@ -2,15 +2,17 @@ package repo
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
-	"fmt"
+
 	"github.com/wsb777/call-back/internal/models"
 )
 
 type UserRepo interface {
 	CreateUser(user *models.User) error
 	FindByLogin(login string) (*models.User, error)
+	FindById(id string) (*models.User, error)
 }
 
 type userRepo struct {
@@ -27,7 +29,7 @@ func (r *userRepo) CreateUser(user *models.User) error {
 	VALUES ($1, $2, $3, $4, $5)
 	RETURNING id
 `
-	now := time.Now()
+	now := time.Now().UTC()
 	err := r.db.QueryRow(
 		query,
 		user.Login,

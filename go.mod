@@ -10,4 +10,7 @@ require (
 
 require github.com/google/wire v0.6.0
 
-require github.com/golang-jwt/jwt/v5 v5.2.3 // indirect
+require (
+	github.com/golang-jwt/jwt/v5 v5.2.3 // indirect
+	github.com/google/uuid v1.6.0 // indirect
+)

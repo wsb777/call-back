@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/wsb777/call-back/http/controllers/user"
@@ -11,7 +10,6 @@ import (
 )
 
 func UserRoutes(router *http.ServeMux, userSignUpService services.UserSignUpService, jwtEncoder _jwt.Encoder) {
-	log.Printf("UserRoutes: jwtEncoder=%p", jwtEncoder)
 	signUpController := user.NewUserSignUpController(userSignUpService)
 
 	protectedHandler := middleware.AuthMiddleware(

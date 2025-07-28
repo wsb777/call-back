@@ -1,4 +1,4 @@
-package user
+package auth
 
 import (
 	"encoding/json"
@@ -7,20 +7,20 @@ import (
 	"net/http"
 
 	"github.com/wsb777/call-back/internal/dto"
-	services "github.com/wsb777/call-back/internal/services/user"
+	services "github.com/wsb777/call-back/internal/services/auth"
 )
 
-type UserSignInController struct {
-	service services.UserSignInService
+type AuthController struct {
+	service services.AuthService
 }
 
-func NewUserSignInController(service services.UserSignInService) *UserSignInController {
-	return &UserSignInController{service: service}
+func NewAuthController(service services.AuthService) *AuthController {
+	return &AuthController{service: service}
 }
 
-func (c *UserSignInController) SignIn(w http.ResponseWriter, r *http.Request) {
+func (c *AuthController) SignIn(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	var req dto.UserSignInDto
+	var req dto.AuthDto
 	log.Println("Запрос на авторизацию")
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

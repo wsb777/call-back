@@ -6,7 +6,8 @@ package app
 import (
 	"net/http"
 
-	services "github.com/wsb777/call-back/internal/services/user"
+	authServices "github.com/wsb777/call-back/internal/services/auth"
+	userServices "github.com/wsb777/call-back/internal/services/user"
 
 	"github.com/google/wire"
 	"github.com/wsb777/call-back/http/routes"
@@ -26,14 +27,16 @@ func InitHttpServer() (http.Handler, error) {
 		db.ConnectDBProvider,
 		// Репозитории
 		repo.NewUserRepo,
+		repo.NewJWTRepo,
 		// Утилиты
 		wire.Bind(new(hasher.PasswordHasher), new(*hasher.BCryptHasher)),
 		hasher.NewBCryptHasher,
 		wire.Bind(new(_jwt.Encoder), new(*_jwt.JWTEncoder)),
 		_jwt.NewJWTEncoder,
 		// Сервисы
-		services.NewUserSignUpService,
-		services.NewUserSignInService,
+		authServices.NewAuthService,
+		authServices.NewRefreshService,
+		userServices.NewUserSignUpService,
 		// Роутеры
 		routes.NewHTTPServer,
 	)

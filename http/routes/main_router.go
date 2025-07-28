@@ -5,11 +5,16 @@ import (
 	"net/http"
 
 	"github.com/wsb777/call-back/http/middleware"
-	services "github.com/wsb777/call-back/internal/services/user"
+	authService "github.com/wsb777/call-back/internal/services/auth"
+	userServices "github.com/wsb777/call-back/internal/services/user"
 	"github.com/wsb777/call-back/pkg/jwt"
 )
 
-func NewHTTPServer(userSignUpService services.UserSignUpService, userSignInService services.UserSignInService, jwtEncoder jwt.Encoder) http.Handler {
+func NewHTTPServer(
+	userSignUpService userServices.UserSignUpService,
+	authService authService.AuthService,
+	refreshService authService.RefreshService,
+	jwtEncoder jwt.Encoder) http.Handler {
 	mux := http.NewServeMux()
 
 	// Корневой обработчик
@@ -22,7 +27,7 @@ func NewHTTPServer(userSignUpService services.UserSignUpService, userSignInServi
 	}))
 	// Регистрация пользовательских маршрутов
 	UserRoutes(mux, userSignUpService, jwtEncoder)
-	AuthRoutes(mux, userSignInService)
+	AuthRoutes(mux, authService, refreshService)
 	middleServer := middleware.AllInfoMiddleware(mux)
 	return middleServer
 }
