@@ -14,11 +14,17 @@ func main() {
 		log.Fatal("Ошибка загрузки .env файла")
 	}
 
-	handler, err := app.InitHttpServer()
+	application, err := app.InitApplication()
+
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("Server is running on :8080")
+	application.AdminInit.InitAdmin()
 
-	log.Fatal(http.ListenAndServe(":8080", handler))
+	port := ":8080"
+	log.Printf("Server starting on port %s", port)
+	if err := http.ListenAndServe(port, application.HTTPServer); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
+
 }

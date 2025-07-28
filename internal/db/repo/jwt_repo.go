@@ -31,7 +31,7 @@ func (r *jwtRepo) IsTokenRevoked(ctx context.Context, tokenID string) (bool, err
 	// Используем контекст для управления таймаутами
 	err := r.db.QueryRowContext(ctx, query, tokenID).Scan(&exists)
 	if err != nil {
-		// Обрабатываем специальный случай отсутствия строк
+
 		if err == sql.ErrNoRows {
 			return false, nil
 		}

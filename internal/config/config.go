@@ -5,12 +5,13 @@ import (
 )
 
 type Config struct {
-	DBUser     string
-	DBPassword string
-	DBName     string
-	DBHost     string
-	DBPort     string
-	JWTSecret  string
+	DBUser        string
+	DBPassword    string
+	DBName        string
+	DBHost        string
+	DBPort        string
+	JWTSecret     string
+	AdminPassword string
 }
 
 func checkEnv(value string) string {
@@ -29,12 +30,14 @@ func NewConfig() (*Config, error) {
 	dbHost := checkEnv("DB_HOST")
 	dbPort := checkEnv("DB_PORT")
 	jwtSecret := checkEnv("JWT_SECRET")
+	AdminPassword := checkEnv("ADMIN_PASSWORD")
 	return &Config{
-		DBUser:     dbUser,
-		DBPassword: dbPassword,
-		DBName:     dbName,
-		DBHost:     dbHost,
-		DBPort:     dbPort,
-		JWTSecret:  jwtSecret,
+		DBUser:        dbUser,
+		DBPassword:    dbPassword,
+		DBName:        dbName,
+		DBHost:        dbHost,
+		DBPort:        dbPort,
+		JWTSecret:     jwtSecret,
+		AdminPassword: AdminPassword,
 	}, nil
 }

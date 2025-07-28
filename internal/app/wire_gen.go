@@ -20,7 +20,7 @@ import (
 
 // Injectors from wire.go:
 
-func InitHttpServer() (http.Handler, error) {
+func InitApplication() (*Application, error) {
 	configConfig, err := config.NewConfig()
 	if err != nil {
 		return nil, err
@@ -38,5 +38,26 @@ func InitHttpServer() (http.Handler, error) {
 	jwtRepo := repo.NewJWTRepo(sqlDB)
 	refreshService := services2.NewRefreshService(jwtRepo, bCryptHasher, jwtEncoder)
 	handler := routes.NewHTTPServer(userSignUpService, authService, refreshService, jwtEncoder)
-	return handler, nil
+	adminInitializer := NewAdminInitializer(userSignUpService, configConfig)
+	application := NewApplication(handler, adminInitializer)
+	return application, nil
+}
+
+// wire.go:
+
+// Application собирает необходимые компоненты приложения
+type Application struct {
+	HTTPServer http.Handler
+	AdminInit  *AdminInitializer
+}
+
+// Провайдер для Application
+func NewApplication(
+	server http.Handler,
+	adminInit *AdminInitializer,
+) *Application {
+	return &Application{
+		HTTPServer: server,
+		AdminInit:  adminInit,
+	}
 }

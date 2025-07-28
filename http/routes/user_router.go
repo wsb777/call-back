@@ -10,9 +10,10 @@ import (
 )
 
 func UserRoutes(router *http.ServeMux, userSignUpService services.UserSignUpService, jwtEncoder _jwt.Encoder) {
+	var protectedHandler http.HandlerFunc
 	signUpController := user.NewUserSignUpController(userSignUpService)
 
-	protectedHandler := middleware.AuthMiddleware(
+	protectedHandler = middleware.AuthMiddleware(
 		http.HandlerFunc(signUpController.Register),
 		jwtEncoder,
 	)

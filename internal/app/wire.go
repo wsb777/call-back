@@ -18,7 +18,24 @@ import (
 	_jwt "github.com/wsb777/call-back/pkg/jwt"
 )
 
-func InitHttpServer() (http.Handler, error) {
+// Application собирает необходимые компоненты приложения
+type Application struct {
+	HTTPServer http.Handler
+	AdminInit  *AdminInitializer
+}
+
+// Провайдер для Application
+func NewApplication(
+	server http.Handler,
+	adminInit *AdminInitializer,
+) *Application {
+	return &Application{
+		HTTPServer: server,
+		AdminInit:  adminInit,
+	}
+}
+
+func InitApplication() (*Application, error) {
 	wire.Build(
 		// Конфиг
 		config.NewConfig,
@@ -37,8 +54,12 @@ func InitHttpServer() (http.Handler, error) {
 		authServices.NewAuthService,
 		authServices.NewRefreshService,
 		userServices.NewUserSignUpService,
+		// Инициализация админа
+		NewAdminInitializer,
 		// Роутеры
 		routes.NewHTTPServer,
+		// Создаем Application
+		NewApplication,
 	)
 	return nil, nil
 }

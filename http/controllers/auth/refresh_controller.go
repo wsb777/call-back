@@ -23,12 +23,21 @@ func (c *RefreshController) RefreshToken(w http.ResponseWriter, r *http.Request)
 	var req dto.RefreshTokenDto
 	log.Println("Запрос на генерацию нового токена")
 
+	ctx := r.Context()
+
+	select {
+	case <-ctx.Done():
+		http.Error(w, "Request canceled", 499)
+		return
+	default:
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 
-	accessToken, refreshToken, err := c.service.RefreshToken(req)
+	accessToken, refreshToken, err := c.service.RefreshToken(ctx, req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusConflict)
 		return

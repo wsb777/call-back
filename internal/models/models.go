@@ -25,7 +25,7 @@ type Room struct {
 }
 
 type JwtToken struct {
-	ID        int
-	UserId    int // ForeignKey к SystemRole
+	ID        string
+	UserId    string
 	ExpiresAt time.Time
 }
