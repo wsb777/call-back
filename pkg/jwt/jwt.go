@@ -84,7 +84,6 @@ func (j *JWTEncoder) GenerateTokenPair(userId string) (accessToken, refreshToken
 
 func (j *JWTEncoder) VerifyToken(tokenString string) (*AccessClaims, error) {
 	key := []byte(j.secret)
-	log.Println(tokenString)
 	token, err := jwt.ParseWithClaims(
 		tokenString,
 		&AccessClaims{},
@@ -106,7 +105,6 @@ func (j *JWTEncoder) VerifyToken(tokenString string) (*AccessClaims, error) {
 
 func (j *JWTEncoder) VerifyRefreshToken(tokenString string) (*RefreshClaims, error) {
 	key := []byte(j.secret)
-	log.Println(tokenString)
 	token, err := jwt.ParseWithClaims(
 		tokenString,
 		&RefreshClaims{},

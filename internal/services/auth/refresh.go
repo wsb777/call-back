@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"errors"
-	"log"
 
 	"github.com/wsb777/call-back/internal/db/repo"
 	"github.com/wsb777/call-back/internal/dto"
@@ -34,29 +33,38 @@ func (s *refreshService) RefreshToken(ctx context.Context, token dto.RefreshToke
 	if claims == nil {
 		return "", "", errors.New("В claims ничего нету")
 	}
-	log.Println(claims)
 	userId := claims.UserID
+
+	revoked, err := s.jwtRepo.IsTokenRevoked(ctx, claims.TokenID)
+	if err != nil {
+		return "", "", err
+	}
+	if revoked {
+		return "", "", errors.New("token revoked")
+	}
 	accessToken, refreshToken, err := s.jwtEncoder.GenerateTokenPair(userId)
-	if err != nil {
-		return "", "", err
-	}
-	modelRefreshToken, err := s.jwtEncoder.VerifyRefreshToken(refreshToken)
 
 	if err != nil {
 		return "", "", err
 	}
 
-	err = s.jwtRepo.CleanupExpiredTokens(ctx)
+	err = s.jwtRepo.RevokeToken(ctx, &models.JwtToken{
+		ID:        claims.TokenID,
+		UserId:    userId,
+		ExpiresAt: claims.ExpiresAt.Time,
+	})
+
+	if err != nil {
+		return "", "", errors.New("failed to revoke old token")
+	}
 
 	if err != nil {
 		return "", "", err
 	}
 
-	err = s.jwtRepo.RevokeToken(ctx, &models.JwtToken{ID: modelRefreshToken.TokenID, UserId: modelRefreshToken.UserID, ExpiresAt: modelRefreshToken.ExpiresAt.Time})
-
-	if err != nil {
-		return "", "", err
-	}
+	go func() {
+		_ = s.jwtRepo.CleanupExpiredTokens(context.Background())
+	}()
 
 	return accessToken, refreshToken, nil
 }
